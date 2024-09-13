@@ -2,12 +2,21 @@ package cleancode.minesweeper.tobe.io;
 
 import cleancode.minesweeper.tobe.GameBoard;
 import cleancode.minesweeper.tobe.GameException;
+import cleancode.minesweeper.tobe.cell.CellSnapshot;
+import cleancode.minesweeper.tobe.cell.CellSnapshotStatus;
 import cleancode.minesweeper.tobe.position.CellPosition;
 
 import java.util.List;
 import java.util.stream.IntStream;
 
 public class ConsoleOutputHandler implements OutputHandler {
+
+    private static final String EMPTY_SIGN = "■";
+    private static final String LAND_MINE_SIGN = "☼";
+    private static final String FLAG_SIGN = "⚑";
+    private static final String UNCHECKED_SIGN = "□";
+
+
     @Override
     public void showGameStartComments() {
         System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
@@ -22,12 +31,39 @@ public class ConsoleOutputHandler implements OutputHandler {
         for (int row = 0; row < board.getRowSize(); row++) {
             System.out.printf("%2d  ", row + 1);
             for (int col = 0; col < board.getColSize(); col++) {
-                System.out.print(board.getSign(CellPosition.of(row, col)) + " ");
+                CellPosition cellPosition = CellPosition.of(row, col);
+
+                CellSnapshot snapshot = board.getSnapshot(cellPosition);
+                String cellSign = decideCellSignFrom(snapshot);
+
+                System.out.print(cellSign + " ");
             }
             System.out.println();
         }
         System.out.println();
     }
+
+    private String decideCellSignFrom(CellSnapshot snapshot) {
+        CellSnapshotStatus status = snapshot.getStatus();
+        if (status == CellSnapshotStatus.EMPTY) {
+            return EMPTY_SIGN;
+        }
+        if (status == CellSnapshotStatus.FLAG) {
+            return FLAG_SIGN;
+        }
+        if (status == CellSnapshotStatus.LAND_MINE) {
+            return LAND_MINE_SIGN;
+        }
+        if (status == CellSnapshotStatus.UNCHECKED) {
+            return UNCHECKED_SIGN;
+        }
+        if (status == CellSnapshotStatus.NUMBER) {
+            return String.valueOf(snapshot.getNearbyLandMIneCount());
+        }
+
+        throw new IllegalArgumentException("확인할 수 없는 셀입니다.");
+    }
+
     @Override
     public void showGameWinningComments() {
         System.out.println("지뢰를 모두 찾았습니다. GAME CLEAR!");
